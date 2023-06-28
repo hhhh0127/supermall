@@ -2,7 +2,7 @@
   <!-- html中驼峰命名要用-连接 -->
   <tab-bar>
     <!-- 父传子：给子组件传递数据path -->
-    <tab-bar-item path="/home" activeColor="blue">
+    <tab-bar-item path="/home">
       <img slot="item-icon" src="~assets/img/tabbar/home.svg" alt="" />
       <img
         slot="item-icon-active"
@@ -11,9 +11,9 @@
       />
       <!-- img是行内块标签，一行中如有剩余空间，行内块标签允许同其他 行内/行内块 标签公用一行 -->
       <!-- 我的这种纯文字是行内标签，这时候img和文字会出现在一行上，此时需要包裹一层div，使得变为块标签，独占一行 -->
-      <div slot="item-text">我的</div>
+      <div slot="item-text">首页</div>
     </tab-bar-item>
-    <tab-bar-item path="/category" activeColor="green">
+    <tab-bar-item path="/category">
       <img slot="item-icon" src="~assets/img/tabbar/category.svg" alt="" />
       <img
         slot="item-icon-active"
@@ -22,7 +22,7 @@
       />
       <div slot="item-text">分类</div>
     </tab-bar-item>
-    <tab-bar-item path="/cart" activeColor="blue">
+    <tab-bar-item path="/cart">
       <img slot="item-icon" src="~assets/img/tabbar/shopcart.svg" alt="" />
       <img
         slot="item-icon-active"
@@ -31,7 +31,7 @@
       />
       <div slot="item-text">购物车</div>
     </tab-bar-item>
-    <tab-bar-item path="/profile" activeColor="blue">
+    <tab-bar-item path="/profile">
       <img slot="item-icon" src="~assets/img/tabbar/profile.svg" alt="" />
       <img
         slot="item-icon-active"

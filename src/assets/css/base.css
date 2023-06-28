@@ -2,7 +2,7 @@
 
 /*:root -> 获取根元素html*/
 :root {
-  /* css定义变量 */
+  /* css定义变量，需要shiyong--，区分大小写 */
   --color-text: #666;
   --color-high-text: #ff5777;
   --color-tint: #ff8198;

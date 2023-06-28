@@ -61,8 +61,10 @@ export default {
   methods: {
     itemClick() {
       // console.log('itemClick');
-      // catch(err => err) 解决重复点击相同路径重复的错误
-      this.$router.replace(this.path).catch(err => err)
+      // catch(err => err) 解决重复点击相同路径重复的错误，这样有点问题
+      // 使用if判断一下
+      if (this.path !== this.$route.path)
+        this.$router.replace(this.path)
     }
   }
 };

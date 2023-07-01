@@ -1,5 +1,7 @@
 <template>
     <div id="hy-swiper">
+      <!-- 很多是移动端的事件 -->
+      <!-- touchstart 事件在用户触摸一个元素时发生 -->
       <div class="swiper" @touchstart="touchStart" @touchmove="touchMove" @touchend="touchEnd">
         <slot></slot>
       </div>

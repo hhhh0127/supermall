@@ -118,3 +118,25 @@ export function request(config) {
 
   return instance(config)
 }
+
+
+export function new_request(config) {
+  const instance = axios.create({
+    baseURL: 'http://123.207.32.32:7888',
+    timeout: 5000
+  })
+
+  instance.interceptors.request.use(config => {
+    return config
+  }, err => {
+
+  })
+
+  instance.interceptors.response.use(res => {
+    return res.data
+  }, err => {
+    console.log(err);
+  })
+
+  return instance(config)
+}

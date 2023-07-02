@@ -3,7 +3,19 @@
   <div id="home">
     <nav-bar class="home-nav"><div slot="center">购物街</div></nav-bar>
 
-    <scorll class="content" ref="scroll">
+    <!-- 实时监控滚动，给子组件传入probeType = 3 -->
+    <!-- 是否监听上拉操作pullUpLoad -->
+    <!-- 监听子组件的自定义事件scroll(子传父) emit过来的 -->
+
+    <!-- 注意的点：属性的驼峰在html中使用-连接，但是监听的事件如pullingUp，不需要-连接，直接就是驼峰，不然会报错 -->
+    <scroll
+      class="content"
+      ref="scroll"
+      :probe-type="3"
+      @scroll="contentScroll"
+      :pull-up-load="true"
+      @pullingUp="loadMore"
+    >
       <!-- 动态绑定banners，数据传递给子组件 -->
       <home-swiper :banners="banners"></home-swiper>
       <recommend-view :recommends="recommends"></recommend-view>
@@ -18,10 +30,11 @@
       <!-- 不要直接在这里取数据，使用计算属性 -->
       <goods-list :goods="showGoods" />
       <!-- 暂时用这种形式做滑动 -->
-    </scorll>
+    </scroll>
 
     <!-- v-on修饰符 .native 监听组件根元素的原生事件 -->
-    <back-top @click.native="backClick"></back-top>
+    <!-- v-show是否显示这个组件 -->
+    <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
   </div>
 </template>
 
@@ -38,11 +51,12 @@ import FeatureView from "./childComps/FeatureView";
 import NavBar from "components/common/navbar/NavBar";
 import TabControl from "components/content/tabControl/TabControl";
 import GoodsList from "components/content/goods/GoodsList";
-import Scorll from "components/common/scroll/Scorll";
+import Scroll from "components/common/scroll/Scroll";
 import BackTop from "components/content/backTop/BackTop";
 
 // 方法
 import { getHomeMultidata, getHomeGoods } from "network/home";
+import { debounce }  from 'common/utils'
 
 export default {
   name: "Home",
@@ -54,7 +68,7 @@ export default {
     NavBar,
     TabControl,
     GoodsList,
-    Scorll,
+    Scroll,
     BackTop,
   },
   data() {
@@ -67,6 +81,8 @@ export default {
         sell: { page: 0, list: [] },
       },
       currentType: "pop",
+      // 是否显示回到顶部
+      isShowBackTop: false,
     };
   },
   computed: {
@@ -83,12 +99,29 @@ export default {
     this.getHomeGoods("pop");
     this.getHomeGoods("new");
     this.getHomeGoods("sell");
+    // this.$refs这里可能拿不到想要的组件，因为还没有挂载，需要在mounted里面做
+  },
+  mounted() {
+    // 产生闭包
+    // 防抖
+    const refresh = debounce(this.$refs.scroll.refresh, 800)
+    // 3.监听item中图片加载完成
+    // 直接这样使用的$bus是空的undefined，需要在main.js中添加 Vue.prototype.$bus = new Vue()
+    this.$bus.$on("itemImageLoad", () => {
+      // 图片加载完成，刷新下
+      // console.log('1111');
+      // this.$refs.scroll.refresh();
+      refresh();
+    });
   },
   methods: {
     /**
      * 事件监听相关的方法
      */
 
+    // 将refresh函数传入debounce函数中，生成一个新的函数，之后再调用非常频繁的时候，就使用新生成的函数
+    // 而新生成的函数，并不会非常频繁的调用，如果下一次执行来得非常快，那么会将上一次取消掉
+    
     tabClick(index) {
       // console.log(index);
       this.currentType = index == 1 ? "pop" : index == 2 ? "new" : "sell";
@@ -114,7 +147,18 @@ export default {
       // 不要直接使用scroll对象调用scrollTo方法，而是做一层封装
       this.$refs.scroll.scrollTo(0, 0, 500);
     },
-
+    contentScroll(position) {
+      // console.log(position);
+      // y是负值，不用if语句，需要学习这种写法
+      this.isShowBackTop = -position.y > 1000;
+    },
+    loadMore() {
+      // console.log('上拉加载更多');
+      this.getHomeGoods(this.currentType);
+      // 有时候图片加载是在计算可滚动高度之后，导致新加载的图片无法滚动(计算的高度不包括这些图片)，这样就会出现bug
+      // 需要刷新重新计算可以滚动的高度
+      this.$refs.scroll.refresh();
+    },
     /**
      * 网络请求相关的方法
      */
@@ -134,6 +178,9 @@ export default {
         // console.log(res);
         this.goods[type].list.push(...res.data.list);
         this.goods[type].page += 1;
+
+        // 每一次上拉结束，都需要调用这个方法，不然无法进行多次下拉
+        this.$refs.scroll.finishPullUp();
       });
     },
   },

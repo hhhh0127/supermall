@@ -3,7 +3,7 @@
     <!-- 每个数据的显示都是固定的，不需要插槽 -->
     <!-- :key需要绑定一个唯一标识 -->
     <!-- v-for 渲染组件列表时应该使用明确的 key 属性来标识每个组件实例，这里使用的时item的id -->
-    <goods-list-item v-for="item in goods" :goods-item="item" :key="item.iid"/>
+    <goods-list-item v-for="(item, index) in goods" :goods-item="item" :key="index"/>
   </div>
 </template>
 

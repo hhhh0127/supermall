@@ -3,6 +3,14 @@
   <div id="home">
     <nav-bar class="home-nav"><div slot="center">购物街</div></nav-bar>
 
+    <tab-control
+        class="tab-control"
+        :titles="['流行', '新款', '精选']"
+        @tabClick="tabClick"
+        ref="tabControl1"
+        v-show="isTabFixed"
+      ></tab-control>
+
     <!-- 实时监控滚动，给子组件传入probeType = 3 -->
     <!-- 是否监听上拉操作pullUpLoad -->
     <!-- 监听子组件的自定义事件scroll(子传父) emit过来的 -->
@@ -17,14 +25,17 @@
       @pullingUp="loadMore"
     >
       <!-- 动态绑定banners，数据传递给子组件 -->
-      <home-swiper :banners="banners"></home-swiper>
+      <home-swiper
+        :banners="banners"
+        @swiperImageLoad="swiperImageLoad"
+      ></home-swiper>
       <recommend-view :recommends="recommends"></recommend-view>
       <feature-view></feature-view>
       <!-- 监听子组件emit过来的tabClick事件 -->
       <tab-control
-        class="tab-control"
         :titles="['流行', '新款', '精选']"
         @tabClick="tabClick"
+        ref="tabControl2"
       ></tab-control>
       <!-- <goods-list :goods="goods[currentType].list"/> -->
       <!-- 不要直接在这里取数据，使用计算属性 -->
@@ -56,7 +67,7 @@ import BackTop from "components/content/backTop/BackTop";
 
 // 方法
 import { getHomeMultidata, getHomeGoods } from "network/home";
-import { debounce }  from 'common/utils'
+import { debounce } from "common/utils";
 
 export default {
   name: "Home",
@@ -83,12 +94,31 @@ export default {
       currentType: "pop",
       // 是否显示回到顶部
       isShowBackTop: false,
+      tabOffsetTop: 0,
+      isTabFixed: false,
+      saveY: 0
     };
   },
   computed: {
     showGoods() {
       return this.goods[this.currentType].list;
     },
+  },
+  destroyed() {
+    // console.log('home destroyed');
+    // this.saveY = 1000;
+  },
+  activated() {
+    // this.$refs.scroll.refresh();
+    this.$refs.scroll.scrollTo(0, this.saveY, 1000);
+    this.$refs.scroll.refresh();
+  },
+  deactivated() {
+    // console.log('deactivated');
+    // this.saveY = this.$refs.scroll.scroll.y;
+    // 保存home的位置信息
+    this.saveY = this.$refs.scroll.getScrollY();
+    console.log(this.saveY);
   },
   // 组件创建完成后发送请求
   created() {
@@ -104,7 +134,7 @@ export default {
   mounted() {
     // 产生闭包
     // 防抖
-    const refresh = debounce(this.$refs.scroll.refresh, 800)
+    const refresh = debounce(this.$refs.scroll.refresh, 800);
     // 3.监听item中图片加载完成
     // 直接这样使用的$bus是空的undefined，需要在main.js中添加 Vue.prototype.$bus = new Vue()
     this.$bus.$on("itemImageLoad", () => {
@@ -121,10 +151,17 @@ export default {
 
     // 将refresh函数传入debounce函数中，生成一个新的函数，之后再调用非常频繁的时候，就使用新生成的函数
     // 而新生成的函数，并不会非常频繁的调用，如果下一次执行来得非常快，那么会将上一次取消掉
-    
+
     tabClick(index) {
       // console.log(index);
       this.currentType = index == 1 ? "pop" : index == 2 ? "new" : "sell";
+      // 点击tabControl，切换类别的时候，currentIndex和index保持一致
+      // 这样两个tabControl就一致了
+      this.$refs.tabControl1.currentIndex = index;
+      this.$refs.tabControl2.currentIndex = index;
+      
+      // 点击tabControl中的项的话,回到顶部
+      this.$refs.scroll.scrollTo(0, -this.tabOffsetTop, 0);
       // switch (index) {
       //   case 0:
       //     this.currentType = 'pop'
@@ -147,10 +184,16 @@ export default {
       // 不要直接使用scroll对象调用scrollTo方法，而是做一层封装
       this.$refs.scroll.scrollTo(0, 0, 500);
     },
+    // 监听滚动
     contentScroll(position) {
       // console.log(position);
       // y是负值，不用if语句，需要学习这种写法
+
+      // 1.判断BackTop是否显示
       this.isShowBackTop = -position.y > 1000;
+
+      // 2.决定tabControl是否吸顶（position: fixed）
+      this.isTabFixed = (-position.y) > this.tabOffsetTop;
     },
     loadMore() {
       // console.log('上拉加载更多');
@@ -159,6 +202,14 @@ export default {
       // 需要刷新重新计算可以滚动的高度
       this.$refs.scroll.refresh();
     },
+    swiperImageLoad() {
+      // 获取tabControl的offsetTop
+      // 所有的组件都有一个属性$el:用于获取组件中的元素
+      // 主要是轮播图的加载在影响获取offsetTop属性的准确性
+      // console.log(this.$refs.tabControl.$el.offsetTop);
+      this.tabOffsetTop = this.$refs.tabControl2.$el.offsetTop;
+    },
+
     /**
      * 网络请求相关的方法
      */
@@ -190,7 +241,7 @@ export default {
 <!-- scoped是作用域，这里设置的样式只针对于当前组件的元素起作用 -->
 <style scoped>
 #home {
-  padding-top: 44px;
+  /* padding-top: 44px; */
   /* 视口高度 */
   height: 100vh;
   position: relative;
@@ -200,20 +251,28 @@ export default {
   background-color: var(--color-tint);
   color: #fff;
 
-  position: fixed;
+  /* home-nav下面的scroll滚动是局部滚动，在固定区域内滚动，那么home-nav就不需要脱离标准流了 */
+  /* 在使用浏览器原生滚动时，为了让导航不跟随一起滚动的时候的设置 */
+  /* position: fixed;
   left: 0;
   right: 0;
   top: 0;
-  z-index: 9;
+  z-index: 9; */
   /* text-align: center; */
 }
 
-.tab-control {
-  /* 使tab-control在屏幕向下滑动到一定的位置时，粘在上方 */
+/* 没做tabControl的吸顶前的设置 */
+/* .tab-control {
+  使tab-control在屏幕向下滑动到一定的位置时，粘在上方
   position: sticky;
-  /* 当滑动没有达到44px时，position:static,达到了会自动替换为position:fixed */
-  /* sticky相当于是两个属性结合使用 */
+  当滑动没有达到44px时，position:static,达到了会自动替换为position:fixed
+  sticky相当于是两个属性结合使用
   top: 44px;
+  z-index: 9;
+} */
+
+.tab-control {
+  position: relative;
   z-index: 9;
 }
 

@@ -81,6 +81,9 @@ export default {
       // this.scroll有值的时候再做刷新操作
       this.scroll && this.scroll.refresh();
     },
+    getScrollY() {
+      return this.scroll ? this.scroll.y : 0;
+    }
   },
 };
 </script>

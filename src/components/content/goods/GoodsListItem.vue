@@ -1,5 +1,5 @@
 <template>
-  <div class="goods-item">
+  <div class="goods-item" @click="itemClick">
     <img :src="goodsItem.show.img" alt="" @load="imageLoad">
     <div class="goods-info">
       <p>{{ goodsItem.title }}</p>
@@ -23,6 +23,20 @@ export default {
   methods: {
     imageLoad() {
       this.$bus.$emit('itemImageLoad')
+    },
+    itemClick() {
+      // 跳转到详情页,并且也把商品的id传递过去
+      // 用push,而不是用repalce,是因为详情页还需要back回去
+      // 1.使用动态路由的方式,注意index.js中也要配置好动态路由
+      this.$router.push('/detail/' + this.goodsItem.iid) // http://localhost:8080/detail/id
+
+      // 2.query方式传递参数 http://localhost:8080/detail?id=22
+      // this.$router.push({
+      //   path: '/detail',
+      //   query: {
+      //     id: '22'
+      //   }
+      // })
     }
   }
 }

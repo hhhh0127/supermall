@@ -17,10 +17,11 @@ export default {
   },
   props: {
     goods: {
-      type: Array,
-      default() {
-        return []
-      }
+      // goods可以是数组，也可以是对象
+      type: [Array, Object]
+      // default() {
+      //   return []
+      // }
     }
   }
 }

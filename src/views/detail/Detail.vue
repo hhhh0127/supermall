@@ -9,6 +9,8 @@
       <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad"></detail-goods-info>
       <detail-param-info :param-info="itemParams"></detail-param-info>
       <detail-comment-info :comment-info="commentInfo"></detail-comment-info>
+      <!-- 组件的复用，这里推荐使用了goods-list这个组件 -->
+      <goods-list :goods="recommend"></goods-list>
     </scroll>
   </div>
 </template>
@@ -21,11 +23,12 @@ import DetailShopInfo from "./childComps/DetailShopInfo.vue";
 import DetailGoodsInfo from './childComps/DetailGoodsInfo.vue'
 import DetailParamInfo from "./childComps/DetailParamInfo.vue";
 import DetailCommentInfo from "./childComps/DetailCommentInfo.vue";
+import GoodsList from '../../components/content/goods/GoodsList.vue';
 
 import Scroll from "components/common/scroll/Scroll";
 
 // 网络请求相关
-import { getDetail, Goods, Shop, GoodsParam } from "network/detail";
+import { getDetail, getRecommend, Goods, Shop, GoodsParam } from "network/detail";
 
 export default {
   name: "Detail",
@@ -38,6 +41,7 @@ export default {
     DetailParamInfo,
     DetailCommentInfo,
     Scroll,
+    GoodsList,
   },
   // data主要是为了保存想要的数据
   data() {
@@ -50,7 +54,8 @@ export default {
       detailInfo: {},
       paramInfo: {},
       itemParams: {},
-      commentInfo: {}
+      commentInfo: {},
+      recommend: {}
     };
   },
   created() {
@@ -90,10 +95,15 @@ export default {
       // 7.取出评论信息
       if (data.rate.cRate !== 0) {
         this.commentInfo = data.rate.list[0]
-        console.log('commnet', this.commentInfo);
+        // console.log('commnet', this.commentInfo);
       }
 
     });
+    
+    // 3.请求推荐数据
+    getRecommend().then((res) => {
+      this.recommend = res.data.list
+    })
   },
   methods: {
     imageLoad() {

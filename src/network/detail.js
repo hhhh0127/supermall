@@ -9,6 +9,12 @@ export function getDetail(iid) {
   });
 }
 
+export function getRecommend() {
+  return new_request({
+    url: '/api/hy66/recommend'
+  })
+}
+
 // 对后台的数据整合，不要一边取数据，一边展示
 export class Goods {
   constructor(itemInfo, columns, services) {

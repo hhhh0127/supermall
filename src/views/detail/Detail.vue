@@ -29,6 +29,7 @@ import Scroll from "components/common/scroll/Scroll";
 
 // 网络请求相关
 import { getDetail, getRecommend, Goods, Shop, GoodsParam } from "network/detail";
+import {itemListenerMixin} from "common/mixin";
 
 export default {
   name: "Detail",
@@ -43,6 +44,7 @@ export default {
     Scroll,
     GoodsList,
   },
+  mixins: [itemListenerMixin],
   // data主要是为了保存想要的数据
   data() {
     return {
@@ -55,7 +57,9 @@ export default {
       paramInfo: {},
       itemParams: {},
       commentInfo: {},
-      recommend: {}
+      recommend: {},
+      // 被混入 mixin
+      // itemImageListener: null
     };
   },
   created() {
@@ -104,6 +108,22 @@ export default {
     getRecommend().then((res) => {
       this.recommend = res.data.list
     })
+  },
+  mounted() {
+    // 被混入了
+    // const refresh = debounce(this.$refs.scroll.refresh, 800);
+    // this.itemImageListener = () => {
+      // refresh()
+    // }
+    // this.$bus.$on('itemImageLoad', this.itemImageListener)
+  },
+  // Detail被排除在keep-alive之外了，所以没有缓存，也就不会执行activated和deactivated两个钩子
+  // deactivated() {
+
+  // }
+  // 所以需要在destroyed中取消事件的监听
+  destroyed() {
+    this.$bus.$off('itemImageLoad', this.itemImageListener)
   },
   methods: {
     imageLoad() {

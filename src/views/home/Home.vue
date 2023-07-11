@@ -67,7 +67,7 @@ import BackTop from "components/content/backTop/BackTop";
 
 // 方法
 import { getHomeMultidata, getHomeGoods } from "network/home";
-import { debounce } from "common/utils";
+import {itemListenerMixin} from "common/mixin";
 
 export default {
   name: "Home",
@@ -82,6 +82,7 @@ export default {
     Scroll,
     BackTop,
   },
+  mixins: [itemListenerMixin],
   data() {
     return {
       banners: [],
@@ -96,7 +97,9 @@ export default {
       isShowBackTop: false,
       tabOffsetTop: 0,
       isTabFixed: false,
-      saveY: 0
+      saveY: 0,
+      // 被混入 mixin
+      // itemImageListener: null
     };
   },
   computed: {
@@ -108,6 +111,7 @@ export default {
     // console.log('home destroyed');
     // this.saveY = 1000;
   },
+  // 有缓存的时候，也就是有keep-alive会调用activated和deactivated两个钩子
   activated() {
     // this.$refs.scroll.refresh();
     this.$refs.scroll.scrollTo(0, this.saveY, 1000);
@@ -118,7 +122,10 @@ export default {
     // this.saveY = this.$refs.scroll.scroll.y;
     // 保存home的位置信息
     this.saveY = this.$refs.scroll.getScrollY();
-    console.log(this.saveY);
+    // console.log(this.saveY);
+
+    // 取消全局事件的监听
+    this.$bus.$off('itemImageLoad', this.itemImageListener)
   },
   // 组件创建完成后发送请求
   created() {
@@ -132,17 +139,22 @@ export default {
     // this.$refs这里可能拿不到想要的组件，因为还没有挂载，需要在mounted里面做
   },
   mounted() {
+    // 这下面的代码被抽取到混入中
     // 产生闭包
     // 防抖
-    const refresh = debounce(this.$refs.scroll.refresh, 800);
+    // const refresh = debounce(this.$refs.scroll.refresh, 800);
     // 3.监听item中图片加载完成
     // 直接这样使用的$bus是空的undefined，需要在main.js中添加 Vue.prototype.$bus = new Vue()
-    this.$bus.$on("itemImageLoad", () => {
+    // 对监听的事件进行保存
+    // this.itemImageListener = () => {
       // 图片加载完成，刷新下
       // console.log('1111');
       // this.$refs.scroll.refresh();
-      refresh();
-    });
+      // refresh();
+    // }
+    // this.$bus.$on("itemImageLoad", this.itemImageListener);
+
+
   },
   methods: {
     /**

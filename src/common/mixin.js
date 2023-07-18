@@ -1,4 +1,5 @@
 import { debounce } from "./utils";
+import BackTop from "components/content/backTop/BackTop";
 
 export const itemListenerMixin = {
   // 注意这里如果混入对象中的data数据的键名与组件data数据的键名冲突优先使用组件的
@@ -26,3 +27,26 @@ export const itemListenerMixin = {
     console.log('mixin');
   },
 };
+
+export const backTopMixin = {
+  components: {
+    BackTop
+  },
+  data() {
+    return {
+      isShowBackTop: false
+    }
+  },
+  methods: {
+    backClick() {
+      // console.log('1');
+      // 父访子
+      // this.$refs.scroll拿到scroll子组件对象，然后访问其中的scroll对象
+      // 还可以this.$children[1]拿到scroll子组件
+      // 500毫秒以内回到顶部，不要太快速
+      // this.$children[1].scrollTo(0, 0, 500);
+      // 不要直接使用scroll对象调用scrollTo方法，而是做一层封装
+      this.$refs.scroll.scrollTo(0, 0, 500);
+    },
+  }
+}

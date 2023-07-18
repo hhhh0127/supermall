@@ -1,17 +1,38 @@
 <template>
   <div id="detail">
-    <detail-nav-bar class="detail-dev"></detail-nav-bar>
+    <detail-nav-bar
+      class="detail-dev"
+      @titleClick="titleClick"
+      ref="nav"
+    ></detail-nav-bar>
     <!-- scroll组件的使用：将需要滚动的包裹在scroll组件里面 -->
-    <scroll class="content" ref="scroll">
+    <scroll
+      class="content"
+      ref="scroll"
+      :probe-type="3"
+      @scroll="contentScroll"
+    >
+      <!-- 属性需要用-连接驼峰，因为他不区分大小写 -->
       <detail-swiper :top-images="topImages"></detail-swiper>
       <detail-base-info :goods="goods"></detail-base-info>
       <detail-shop-info :shop="shop"></detail-shop-info>
-      <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad"></detail-goods-info>
-      <detail-param-info :param-info="itemParams"></detail-param-info>
-      <detail-comment-info :comment-info="commentInfo"></detail-comment-info>
+      <detail-goods-info
+        :detail-info="detailInfo"
+        @imageLoad="imageLoad"
+      ></detail-goods-info>
+      <detail-param-info
+        ref="params"
+        :param-info="itemParams"
+      ></detail-param-info>
+      <detail-comment-info
+        ref="comment"
+        :comment-info="commentInfo"
+      ></detail-comment-info>
       <!-- 组件的复用，这里推荐使用了goods-list这个组件 -->
-      <goods-list :goods="recommend"></goods-list>
+      <goods-list ref="recommend" :goods="recommend"></goods-list>
     </scroll>
+    <detail-bottom-bar></detail-bottom-bar>
+    <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
   </div>
 </template>
 
@@ -20,16 +41,24 @@ import DetailNavBar from "./childComps/DetailNavBar.vue";
 import DetailSwiper from "./childComps/DetailSwiper.vue";
 import DetailBaseInfo from "./childComps/DetailBaseInfo.vue";
 import DetailShopInfo from "./childComps/DetailShopInfo.vue";
-import DetailGoodsInfo from './childComps/DetailGoodsInfo.vue'
+import DetailGoodsInfo from "./childComps/DetailGoodsInfo.vue";
 import DetailParamInfo from "./childComps/DetailParamInfo.vue";
 import DetailCommentInfo from "./childComps/DetailCommentInfo.vue";
-import GoodsList from '../../components/content/goods/GoodsList.vue';
+import DetailBottomBar from "./childComps/DetailBottomBar.vue";
 
+import GoodsList from "../../components/content/goods/GoodsList.vue";
 import Scroll from "components/common/scroll/Scroll";
 
 // 网络请求相关
-import { getDetail, getRecommend, Goods, Shop, GoodsParam } from "network/detail";
-import {itemListenerMixin} from "common/mixin";
+import {
+  getDetail,
+  getRecommend,
+  Goods,
+  Shop,
+  GoodsParam,
+} from "network/detail";
+import { itemListenerMixin, backTopMixin } from "common/mixin";
+import { debounce } from "@/common/utils";
 
 export default {
   name: "Detail",
@@ -43,8 +72,10 @@ export default {
     DetailCommentInfo,
     Scroll,
     GoodsList,
+    DetailBottomBar,
   },
-  mixins: [itemListenerMixin],
+  // 回到顶部也加入混入
+  mixins: [itemListenerMixin, backTopMixin],
   // data主要是为了保存想要的数据
   data() {
     return {
@@ -58,10 +89,14 @@ export default {
       itemParams: {},
       commentInfo: {},
       recommend: {},
+      themeTopYs: [],
+      getThemeTopY: null,
+      currentIndex: 0
       // 被混入 mixin
       // itemImageListener: null
     };
   },
+  // created是不会进行dom渲染的，如果想拿到数据或者实时更新这个数据的话使用nextTick()
   created() {
     // 1.保存传入的id
     this.iid = this.$route.params.id;
@@ -94,42 +129,112 @@ export default {
       // 用类包装数据，推荐写法
       // this.paramInfo = new GoodsParam(data.itemParams.info, data.itemParams.rule);
       // 直接使用
-      this.itemParams = data.itemParams
+      this.itemParams = data.itemParams;
 
       // 7.取出评论信息
       if (data.rate.cRate !== 0) {
-        this.commentInfo = data.rate.list[0]
+        this.commentInfo = data.rate.list[0];
         // console.log('commnet', this.commentInfo);
       }
 
+      // 第一次获取，值不对
+      // 原因：this.$refs.params.$el没有渲染
+      // this.themeTopYs = [];
+
+      // this.themeTopYs.push(0);
+      // // offsetTop是负值，需要减去44
+      // this.themeTopYs.push(this.$refs.params.$el.offsetTop - 44);
+      // this.themeTopYs.push(this.$refs.comment.$el.offsetTop - 44);
+      // this.themeTopYs.push(this.$refs.recommend.$el.offsetTop - 44);
+
+      // // 渲染完成之后会回调nextTick函数
+      // this.$nextTick(() => {
+      //   // 2.第二次获取：值不对
+      //   // 原因：图片没有计算在内
+      //   // 根据最新的数据，对应的DOM已经是被渲染出来
+      //   // 但是图片依然没有加载完
+      //   this.themeTopYs = [];
+
+      //   this.themeTopYs.push(0);
+      //   this.themeTopYs.push(this.$refs.params.$el.offsetTop - 44);
+      //   this.themeTopYs.push(this.$refs.comment.$el.offsetTop - 44);
+      //   this.themeTopYs.push(this.$refs.recommend.$el.offsetTop - 44);
+      // });
     });
-    
+
     // 3.请求推荐数据
     getRecommend().then((res) => {
-      this.recommend = res.data.list
-    })
+      this.recommend = res.data.list;
+    });
+
+    // 4.给getThemeTopY赋值
+    this.getThemeTopY = debounce(() => {
+      this.themeTopYs = [];
+      this.themeTopYs.push(0);
+      this.themeTopYs.push(this.$refs.params.$el.offsetTop - 44);
+      this.themeTopYs.push(this.$refs.comment.$el.offsetTop - 44);
+      this.themeTopYs.push(this.$refs.recommend.$el.offsetTop - 44);
+      // 相当于添加一个哨兵
+      this.themeTopYs.push(Number.MAX_VALUE);
+    }, 100);
   },
+  // 在mounted中，这时，子组件有可能还没有加载完成
   mounted() {
     // 被混入了
     // const refresh = debounce(this.$refs.scroll.refresh, 800);
     // this.itemImageListener = () => {
-      // refresh()
+    // refresh()
     // }
     // this.$bus.$on('itemImageLoad', this.itemImageListener)
   },
+  updated() {},
   // Detail被排除在keep-alive之外了，所以没有缓存，也就不会执行activated和deactivated两个钩子
   // deactivated() {
 
   // }
   // 所以需要在destroyed中取消事件的监听
   destroyed() {
-    this.$bus.$off('itemImageLoad', this.itemImageListener)
+    this.$bus.$off("itemImageLoad", this.itemImageListener);
   },
   methods: {
     imageLoad() {
-      this.$refs.scroll.refresh()
-    }
-  }
+      this.$refs.scroll.refresh();
+      this.getThemeTopY();
+    },
+    titleClick(index) {
+      // console.log(index);
+      this.$refs.scroll.scrollTo(0, -this.themeTopYs[index], 100);
+    },
+    contentScroll(position) {
+      // console.log(position);
+      // 1.获取y值
+      const positionY = -position.y;
+      let length = this.themeTopYs.length;
+      // 2.positionY和主题中值进行对比
+
+      for (let i = 0; i < length - 1; i++) {
+        // 普通做法
+        // if (this.currentIndex !== i && ((i < length - 1 && positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i+1]) || (i === length - 1 && positionY >= this.themeTopYs[i]))) {
+        //   this.currentIndex = i;
+        //   this.$refs.nav.currentIndex = this.currentIndex;
+        // }
+        // hack做法
+        if (
+          this.currentIndex !== i &&
+          positionY > this.themeTopYs[i] &&
+          positionY < this.themeTopYs[i + 1]
+        ) {
+          this.currentIndex = i;
+          this.$refs.nav.currentIndex = this.currentIndex;
+        }
+      }
+
+      // 3.是否回到顶部
+      this.isShowBackTop = -position.y > 1000;
+    },
+
+
+  },
 };
 </script>
 

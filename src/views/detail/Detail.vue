@@ -31,7 +31,8 @@
       <!-- 组件的复用，这里推荐使用了goods-list这个组件 -->
       <goods-list ref="recommend" :goods="recommend"></goods-list>
     </scroll>
-    <detail-bottom-bar></detail-bottom-bar>
+    <!-- 监听子组件的addCart，也就是点击子组件的点击 -->
+    <detail-bottom-bar @addCart="addToCart"></detail-bottom-bar>
     <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
   </div>
 </template>
@@ -232,8 +233,22 @@ export default {
       // 3.是否回到顶部
       this.isShowBackTop = -position.y > 1000;
     },
+    addToCart() {
+      // 1.购物车需要展示的商品信息
+      const product = {};
+      product.image = this.topImages[0];
+      product.title = this.goods.title;
+      product.desc = this.goods.decs;
+      product.price = this.goods.realPrice;
+      product.iid = this.iid;
+      console.log(product);
+      // 2.商品添加到购物车，放入Vuex中管理
+      // 不要这样做，任何修改state都要在mutations中
+      // this.$store.cartList.push(product)
+      console.log(this.$store);
+      this.$store.commit('addCart', product)
 
-
+    }
   },
 };
 </script>

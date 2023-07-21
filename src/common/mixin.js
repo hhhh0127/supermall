@@ -24,7 +24,7 @@ export const itemListenerMixin = {
     };
 
     this.$bus.$on("itemImageLoad", this.itemImageListener);
-    console.log('mixin');
+    // console.log('mixin');
   },
 };
 

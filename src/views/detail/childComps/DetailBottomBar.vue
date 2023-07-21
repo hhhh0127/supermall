@@ -26,7 +26,8 @@
 		name: "DetailBottomBar",
     methods: {
       addToCart() {
-        this.$emit('addToCart')
+        // 需要在详情页中来处理商品的添加
+        this.$emit('addCart');
       }
     }
 	}

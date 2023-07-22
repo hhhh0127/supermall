@@ -246,7 +246,8 @@ export default {
       // 不要这样做，任何修改state都要在mutations中
       // this.$store.cartList.push(product)
       console.log(this.$store);
-      this.$store.commit('addCart', product)
+      // this.$store.commit('addCart', product);
+      this.$store.dispatch('addCart', product)
 
     }
   },

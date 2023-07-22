@@ -15,7 +15,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
   .nav-bar {
     display: flex;
     /* line-height属性设置的行高也就是定义的两行文字基线之间的距离，注意是文字的基线 */

@@ -61,6 +61,8 @@ import {
 import { itemListenerMixin, backTopMixin } from "common/mixin";
 import { debounce } from "@/common/utils";
 
+import {mapActions} from 'vuex'
+
 export default {
   name: "Detail",
   components: {
@@ -198,6 +200,7 @@ export default {
     this.$bus.$off("itemImageLoad", this.itemImageListener);
   },
   methods: {
+    ...mapActions(['addCart']),
     imageLoad() {
       this.$refs.scroll.refresh();
       this.getThemeTopY();
@@ -247,8 +250,15 @@ export default {
       // this.$store.cartList.push(product)
       console.log(this.$store);
       // this.$store.commit('addCart', product);
-      this.$store.dispatch('addCart', product)
+      // diapatch返回一个promise对象
+      // this.$store.dispatch('addCart', product).then(res => {
+      //   console.log(res);
+      // });
 
+      // 做了映射可以直接使用this.addCart
+      this.addCart(product).then(res => {
+        console.log(res);
+      })
     }
   },
 };

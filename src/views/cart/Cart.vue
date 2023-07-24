@@ -9,12 +9,14 @@
     <cart-list></cart-list>
 
     <!-- 底部的汇总 -->
+    <cart-bottom-bar></cart-bottom-bar>
   </div>
 </template>
 
 <script>
 import NavBar from "components/common/navbar/NavBar.vue";
 import CartList from "./childComps/CartList.vue";
+import CartBottomBar from './childComps/CartBottomBar.vue'
 
 import { mapGetters } from "vuex";
 
@@ -23,6 +25,7 @@ export default {
   components: {
     NavBar,
     CartList,
+    CartBottomBar
   },
   computed: {
     // cartLength() {
@@ -46,7 +49,7 @@ export default {
   height: 100vh;
 }
 .nav-bar {
-  background-color: var(--color--tint);
+  background-color: var(--color-tint);
   /* color: #fff; */
   font-weight: 700;
 }

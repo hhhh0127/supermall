@@ -34,7 +34,9 @@
     <!-- 监听子组件的addCart，也就是点击子组件的点击 -->
     <detail-bottom-bar @addCart="addToCart"></detail-bottom-bar>
     <back-top @click.native="backClick" v-show="isShowBackTop"></back-top>
+
   </div>
+  
 </template>
 
 <script>
@@ -49,6 +51,7 @@ import DetailBottomBar from "./childComps/DetailBottomBar.vue";
 
 import GoodsList from "../../components/content/goods/GoodsList.vue";
 import Scroll from "components/common/scroll/Scroll";
+import Toast from 'components/common/toast/Toast.vue';
 
 // 网络请求相关
 import {
@@ -76,6 +79,7 @@ export default {
     Scroll,
     GoodsList,
     DetailBottomBar,
+    Toast,
   },
   // 回到顶部也加入混入
   mixins: [itemListenerMixin, backTopMixin],
@@ -94,7 +98,9 @@ export default {
       recommend: {},
       themeTopYs: [],
       getThemeTopY: null,
-      currentIndex: 0
+      currentIndex: 0,
+      message: '',
+      show: false
       // 被混入 mixin
       // itemImageListener: null
     };
@@ -244,11 +250,11 @@ export default {
       product.desc = this.goods.decs;
       product.price = this.goods.realPrice;
       product.iid = this.iid;
-      console.log(product);
+      // console.log(product);
       // 2.商品添加到购物车，放入Vuex中管理
       // 不要这样做，任何修改state都要在mutations中
       // this.$store.cartList.push(product)
-      console.log(this.$store);
+      // console.log(this.$store);
       // this.$store.commit('addCart', product);
       // diapatch返回一个promise对象
       // this.$store.dispatch('addCart', product).then(res => {
@@ -257,7 +263,15 @@ export default {
 
       // 做了映射可以直接使用this.addCart
       this.addCart(product).then(res => {
-        console.log(res);
+        // this.show = true;
+        // this.message = res;
+        
+        // setTimeout(() => {
+        //   this.show = false;
+        //   this.message = ''
+        // }, 1500);
+        // console.log(res);
+        this.$toast.show(res, 2000)
       })
     }
   },

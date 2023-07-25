@@ -53,6 +53,11 @@ export default {
       // }
 
       this.cartList.forEach(item => item.checked = !this.isSlectAll)
+    },
+    calcClick() {
+      if (!this.isSlectAll) {
+        
+      }
     }
   }
 };
